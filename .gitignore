@@ -1,0 +1,8 @@
+builddir/
+*.sublime-project
+*.sublime-workspace
+*.Rdata
+*.stderr
+*.stdout
+*.jld
+*.ipynb_checkpoints
