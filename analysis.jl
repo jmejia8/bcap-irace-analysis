@@ -3,9 +3,9 @@ using Bilevel
 using DataFrames
 using HypothesisTests
 using Statistics
-using BiPlots
-gr()
 
+include("distributed.jl")
+include("algorithms.jl")
 
 R""" 
 library(irace)
@@ -84,25 +84,69 @@ end
 
 function mergeResults(name)
     df_irace =  getBestParms(name)
+
     df_bcap= getBestParmsBCAP(name)[:,1:end-1] # SRatio is not considered
     
+
+
     nms = String.(names(df_irace))
     names1 = "bcap_" .+ nms
     names2 = "irace_" .+ nms
-
-
     df = hcat(df_bcap, df_irace)
     names!(df, Symbol.([ names1..., names2...  ]))
+
+    names!(df_bcap, names(df_irace))
+
+
+    return Dict("merged" => df, "bcap" => df_bcap, "irace" => df_irace)
 end
 
-function main()
-    tables = []
+function saveBestParms()
+    tables = Dict{String, Dict}()
     for name in ["abc", "de", "eca", "pso"]
-        push!(tables, mergeResults(name))
+        tables[name] = mergeResults(name)
     end
 
     save("dataFrame_parameters_bcap_irace.jld", "tables", tables)
 
 end
 
-main()
+function testBestParms()
+    fname = "dataFrame_parameters_bcap_irace.jld"
+
+    if !isfile(fname)
+        saveBestParms()
+    end
+
+    bestParms = load(fname, "tables")
+
+    tuners = ["bcap", "irace"]
+    allRuns = Dict()
+    for algname in keys(bestParms)
+        res = Dict()
+        for tuner = tuners
+            tab = bestParms[algname][tuner]
+            
+            errors = []
+            costs = []
+            for i = 1:10
+                Φ = tab[i, :]
+                r = getErrors(Φ, benchmark, algname)
+                push!(errors, r[1])
+                push!(costs,  r[2])
+                println("Alg: $algname Tuner: $tuner Parms_id: $i ")
+            end
+
+            res[tuner] = Dict( "error" => errors, "cost" => costs )
+        end
+
+        allRuns[algname] = res
+
+    end
+
+    save("accuracy_of_parameters_bcap_irace.jld", "tables", tables)
+
+    # return r
+end
+
+testBestParms()
