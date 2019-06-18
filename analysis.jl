@@ -1,6 +1,24 @@
 using JLD
 import Statistics: median, mean
-using HypothesisTests, DataFrames
+using HypothesisTests, DataFrames, Bilevel
+
+function getBCAPData(name, i)
+    fname = "data/bcap/$(uppercase(name))_result_CEC17_D10_seed1560229400_run$(i).jld"
+    load(fname, "result")
+end
+
+function table2latex(df)
+    
+    header = join(["Run", String.(names(df))...], " & ")
+
+    println(header, " \\\\ \\hline")
+    for i = 1:nrow(df)
+        str = ["$i", sprint.(print, round.(df[i,:], digits=6))...]
+        println(join(str, " & "), "\\\\ \\hline ")
+    end
+
+end
+
 
 function updateTable(runs, parms, algname, tuner1, tuner2  = tuner1)
  
@@ -29,17 +47,18 @@ function updateTable(runs, parms, algname, tuner1, tuner2  = tuner1)
 
     score = sum(matrix, dims = 2)[:,1]
     score2 = sum(matrix2, dims = 2)[:,1]
-    score3 = ( [ sum(y .== 0.0) for y in runs[algname][tuner1]["error"]] )
+    score3 = ( [ sum(y .== 0.0)/length(y) for y in runs[algname][tuner1]["error"]] )
 
     df = parms[algname][tuner1]
+    insertcols!(df, ncol(df)+1, :SR => round.(Int, 100score3))
+
+    cost = [ mean(y) for y in runs[algname][tuner1]["cost"] ] ./ 100000
+    cost = min.(1, cost)
+    insertcols!(df, ncol(df)+1, :NFEs => (round.(Int, 100cost)))
+    
     insertcols!(df, ncol(df)+1, :win => score)
     insertcols!(df, ncol(df)+1, :tie => score2)
     insertcols!(df, ncol(df)+1, :lose => 100 .- (score2 + score))
-    insertcols!(df, ncol(df)+1, :SR => score3)
-
-    cost = [ mean(y) for y in runs[algname][tuner1]["cost"] ] ./ 100000
-    insertcols!(df, ncol(df)+1, :NFEs => cost)
-    
     sort!(df, [:lose])
    
     return df
@@ -48,7 +67,7 @@ end
 function test(algname)
     bestParms = load("dataFrame_parameters_bcap_irace.jld", "tables")
 
-    allRuns = load("accuracy_of_parameters_bcap_irace.jld", "parameter_runs")
+    allRuns = load("accuracy_of_parameters_bcap_irace2.jld", "parameter_runs")
 
     # algname = "eca"
 
@@ -57,11 +76,20 @@ function test(algname)
 
 
     println("irace")
-    display(df)
+    # display(df)
+    display(table2latex(df))
     println("bcap")
-    display(df2)
+    display(table2latex(df2))
+    # display(df2)
 
     # return median(allRuns["pso"]["irace"]["error"][1], dims= 2)
 end
 
-test()
+
+function main()
+    name  = "abc"
+    i = 1
+    getBCAPData(name, i)
+end
+
+main()
