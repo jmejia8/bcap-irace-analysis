@@ -144,8 +144,8 @@ function PSO_errors(Φ, benchmark)
                                 showResults=false)
 
             Errors_shared[fn, r] = fx < desired_accu ? 0.0 : fx
-            nruns *= 0
             Cost_shared[fn, r] = nruns 
+            nruns *= 0
         end
     end
 
@@ -161,11 +161,11 @@ end
 function getErrors(Φ, benchmark, name)
     if name == "abc"
         return ABC_errors(Φ, benchmark)
-    elseif name == "abc"
-        ECA_errors(Φ, benchmark)
+    elseif name == "eca"
+        return ECA_errors(Φ, benchmark)
     elseif name == "de"
-        DE_errors(Φ, benchmark)
+        return DE_errors(Φ, benchmark)
     elseif name == "pso"
-        PSO_errors(Φ, benchmark)
+        return PSO_errors(Φ, benchmark)
     end
 end
