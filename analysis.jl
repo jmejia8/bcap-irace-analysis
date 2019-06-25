@@ -86,10 +86,46 @@ function test(algname)
 end
 
 
-function main()
-    name  = "abc"
-    i = 1
-    getBCAPData(name, i)
+using StatsPlots
+import Random: shuffle
+pyplot()
+
+function convergence()
+
+
+    name  = "eca"
+ 
+    markers  = shuffle(Plots._shape_keys)
+    l_styles = rand([:solid, :dash, :dot, :dashdot], 10)
+
+    calls = Int[]
+
+    l = @layout [a b; c d]
+
+    p = plot(layout= l, size = (800, 500))
+
+    algs = ["abc", "eca", "de", "pso"]
+
+    for j = 1:4
+        for i = 1:10
+            println(algs[j], " ", i)
+            res  = getBCAPData(algs[j], i)
+
+            conv = map(s->s.best_sol.F, res.convergence )
+            conv_calls = map(s->s.F_calls, res.convergence )
+
+            plot!(p[j], conv_calls, (conv),
+                        marker=markers[i],
+                        linestyle=l_styles[i],
+                        title="Convergence: $(uppercase(algs[j]))",
+                        legend=false,
+                        xlabel="UL calls")
+
+        end
+    end
+
+    p
+
 end
 
-main()
+convergence()
