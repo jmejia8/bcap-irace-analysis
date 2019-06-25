@@ -6,3 +6,4 @@ builddir/
 *.stdout
 *.jld
 *.ipynb_checkpoints
+*.mp4
